@@ -1,6 +1,7 @@
 # Crypto Ticker: the prices of the coins you pick, every 30 s. A wedgie has no internet of its own: its page on
-# wedgie.dev (open in a tab) or `wedgie.py net` fetches for it (firmware net.py, 0.3.61+), only from
-# api.coinbase.com (wedgie.json "net"). One request gets every coin: Coinbase's USD exchange rates, picked.
+# wedgie.dev (open in a tab) or `wedgie.py net` fetches for it (firmware net.py, 0.3.61+). Prices come from
+# Alchemy through wedgie.dev (wedgie.json "net": "chain"; its key stays there): coins by symbol in one call,
+# and tokens by address on their own chain (TOKENS), one call per chain.
 # Green: pick coins. Grey (next to green): now. On the picker: green adds or removes a coin, red is done.
 import time
 import lcd as L
@@ -8,9 +9,14 @@ import ui
 import net
 import save
 
-COINS = ("BTC", "ETH", "SOL", "XRP", "BNB", "DOGE", "ADA", "AVAX", "LINK", "DOT", "LTC", "UNI", "AAVE", "ARB",
-         "OP", "POL", "SUI", "NEAR", "TON", "SHIB", "PEPE")
-URL = "https://api.coinbase.com/v2/exchange-rates?currency=USD"
+SYMBOLS = ("BTC", "ETH", "SOL", "XRP", "BNB", "DOGE", "ADA", "AVAX", "LINK", "DOT", "LTC", "UNI", "AAVE", "ARB",
+           "OP", "POL", "SUI", "NEAR", "TON", "HYPE", "SHIB", "PEPE")
+TOKENS = {                          # name -> (chain, token address): any ERC-20 Alchemy prices
+    "DEGEN": (8453, "0x4ed4e862860bed51a9570b96d89af5e1b0efefed"),
+    "AERO": (8453, "0x940181a94a35a4569e4529a3cdfb74e38fd98631"),
+    "BRETT": (8453, "0x532f27101965dd16442e59d40670faf5ebb142e4"),
+}
+COINS = SYMBOLS + tuple(TOKENS)
 EVERY = 30000
 ROWS = 6
 ROW = 30
@@ -37,13 +43,21 @@ def dollars(p):
 
 
 def fetch(mine):
-    r = net.get(URL, pick={c: "data.rates." + c for c in mine})
     out = {}
+    syms = [c for c in mine if c in SYMBOLS]
+    if syms:
+        for c, v in net.chain(1, "wedgie_symbols", syms).items():
+            out[c] = float(v)
+    chains = {}
     for c in mine:
-        try:
-            out[c] = 1 / float(r.get(c))
-        except (TypeError, ValueError, ZeroDivisionError):
-            pass
+        if c in TOKENS:
+            chains.setdefault(TOKENS[c][0], []).append(c)
+    for ch, cs in chains.items():
+        got = net.chain(ch, "wedgie_prices", [TOKENS[c][1] for c in cs])["tokens"]
+        for c in cs:
+            v = got.get(TOKENS[c][1])
+            if v:
+                out[c] = float(v)
     return out
 
 
@@ -109,7 +123,7 @@ def run():
     keys = L.Keys()
     mine = save.load("coins", ["BTC", "ETH", "SOL"])
     mine = [c for c in mine if c in COINS] or ["BTC", "ETH", "SOL"]
-    ui.progress("Getting prices", "coinbase.com", bar=False)
+    ui.progress("Getting prices", "alchemy", bar=False)
     now, was, top = {}, {}, 0
     while True:
         try:
@@ -132,7 +146,7 @@ def run():
                     except OSError:
                         pass
                     now, was = {}, {}
-                    ui.progress("Getting prices", "coinbase.com", bar=False)
+                    ui.progress("Getting prices", "alchemy", bar=False)
                 break
             if ("up" in k or "down" in k) and len(mine) > ROWS and now:
                 top = max(0, min(len(mine) - ROWS, top + (1 if "down" in k else -1)))

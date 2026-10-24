@@ -3,13 +3,30 @@
     {
       "mod": "ticker",
       "name": "Crypto Ticker",
-      "about": "Live prices of the coins you pick: BTC, ETH, SOL and 18 more. Keep its wedgie.dev page open: that's its internet.",
-      "files": ["ticker.py"],
+      "about": "Live prices of the coins you pick: BTC, ETH, SOL, Base tokens and more. Keep its wedgie.dev page open: that's its internet.",
+      "files": [
+        "ticker.py"
+      ],
       "entry": "run",
       "fw": "0.3.61",
-      "net": ["api.coinbase.com"],
+      "net": [
+        "chain"
+      ],
       "label": "#f2a900",
-      "icon": ["............", "....yyyy....", "..yyyyyyyy..", ".yyykkkkyyy.", ".yyky.ykyyy.", ".yykyyyyyyy.", ".yykyyyyyyy.", ".yyky.ykyyy.", ".yyykkkkyyy.", "..yyyyyyyy..", "....yyyy....", "............"]
+      "icon": [
+        "............",
+        "....yyyy....",
+        "..yyyyyyyy..",
+        ".yyykkkkyyy.",
+        ".yyky.ykyyy.",
+        ".yykyyyyyyy.",
+        ".yykyyyyyyy.",
+        ".yyky.ykyyy.",
+        ".yyykkkkyyy.",
+        "..yyyyyyyy..",
+        "....yyyy....",
+        "............"
+      ]
     }
   ]
 }
