@@ -62,21 +62,26 @@ def fetch(mine):
 
 
 def draw(d, mine, now, was, top):
+    big = len(mine) <= 4                # a few coins: bigger rows
+    row, rows = (46, 4) if big else (ROW, ROWS)
     d.fill(ui.WHITE)
     ui.band(d)
     if not now:
         ui.say(d, "No prices", 110, ui.MUTED, 2)
-    for i, c in enumerate(mine[top:top + ROWS]):
-        y = TOP + i * ROW
+    for i, c in enumerate(mine[top:top + rows]):
+        y = TOP + i * row
         p = now.get(c)
         s = dollars(p) if p else "?"
-        sc = 2 if 16 * (len(c) + len(s) + 1) <= 232 else 1
+        ps = 3 if big and 24 * len(s) + 16 * len(c) + 8 <= 232 else 2
+        if 8 * ps * len(s) + 16 * len(c) + 8 > 232:
+            ps = 1 if 16 * len(s) + 8 * len(c) + 8 > 232 else 2
+        ls = 2 if 8 * ps * len(s) + 16 * len(c) + 8 <= 232 else 1
         col = ui.INK if not p or c not in was or was[c] == p else (ui.GREEN_D if p > was[c] else ui.RED)
-        d.big_text(c, 4, y + (0 if sc == 2 else 4), ui.MUTED, sc)
-        d.big_text(s, 236 - 8 * sc * len(s), y + (0 if sc == 2 else 4), col, sc)
-        if i < ROWS - 1 and top + i + 1 < len(mine):
-            d.hline(4, y + ROW - 7, 232, ui.GREY)
-    if len(mine) > ROWS:
+        d.big_text(c, 4, y + 4 * (ps - ls), ui.MUTED, ls)
+        d.big_text(s, 236 - 8 * ps * len(s), y, col, ps)
+        if i < rows - 1 and top + i + 1 < len(mine):
+            d.hline(4, y + row - 7, 232, ui.GREY)
+    if len(mine) > rows:
         ui.say(d, "^ v more", 212, ui.MUTED)
     ui.say(d, "{g} coins  {k} now", 226, ui.MUTED)
     d.show()
